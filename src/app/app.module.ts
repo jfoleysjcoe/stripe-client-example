@@ -4,20 +4,22 @@ import { NgModule } from '@angular/core';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CheckoutComponent } from './checkout/checkout.component';
-import { CheckoutService } from './checkout/checkout.service';
+import { ApiService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
+import { ResultComponent } from './result/result.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CheckoutComponent
+    CheckoutComponent,
+    ResultComponent
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     AppRoutingModule
   ],
-  providers: [CheckoutService],
+  providers: [ApiService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

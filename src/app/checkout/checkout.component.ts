@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CheckoutService } from './checkout.service';
+import { ApiService } from '../app.service';
 import { OrderRequest } from '../models/orderRequest';
 
 @Component({
@@ -10,7 +10,7 @@ import { OrderRequest } from '../models/orderRequest';
 export class CheckoutComponent implements OnInit {
   public sessionId: string;
   public orderRequest: OrderRequest[] = []; // declare the request array
-  constructor(private service: CheckoutService) { }
+  constructor(private service: ApiService) { }
 
   ngOnInit() {
     // when the component loads, I am initializing the orderRequest with fixed values.
@@ -29,7 +29,7 @@ export class CheckoutComponent implements OnInit {
   submit() {
     // using the fixed values above, we will pass that array to the service.
     // with .subscribe, we are using the session id provided by the api to redirect to the appropriate session within Stripe.
-    this.service.paymentRequest(this.orderRequest).subscribe(resp => this.redirect(resp.id));
+    this.service.initSession(this.orderRequest).subscribe(resp => this.redirect(resp.id));
   }
 
   // below taken directly from Stripe Documentation (except the window.alert)
