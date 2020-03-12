@@ -1,27 +1,108 @@
 # MyShopApp
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.1.0.
+### Reference
 
-## Development server
+[Stripe Api - One-Time Checkout](https://stripe.com/docs/payments/checkout/one-time)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+# Using Stripe
 
-## Code scaffolding
+To start with Strpe, you will have to create an account at Stripe.com.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Once created, you will need to set up a few files to get to the good stuff.
 
-## Build
+##### environments/environment.ts
+```typescript
+export const environment = {
+  production: false,
+  stripeKey: 'pk_test_...', // go to link below this code block to find your Publishable key
+  api: 'http://localhost:5000' // your api's base url
+};
+```
+[Api Keys Link](https://dashboard.stripe.com/test/apikeys)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+##### index.html
+```html
+<script src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript">
+  var stripe;
+</script>
+```
 
-## Running unit tests
+##### app/typings.d.ts
+```javascript
+declare var stripe: any;
+declare function Stripe(key: string);
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+##### app/app.component.ts
+```typescript
+constructor() {
+  stripe = Stripe(environment.stripeKey);
+}
+```
+### Models and Services
 
-## Running end-to-end tests
+Once the Stripe object is set up. You can create your Client model. In this project, the client will provide hard values to the API. Normally, you would want to create the objects from the selection the user has made.
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+The client will only need to send the API the Id of each item and the quantity with each Id.
 
-## Further help
+#### Request Model
+##### app/models/orderRequest.ts
+```typescript
+export class OrderRequest {
+  public InventoryItemId: number;
+  public Quantity: number;
+}
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+#### Checkout Component
+
+##### app/checkout/checkout.component.ts
+```typescript
+public orderRequest: OrderRequest[] = []; // declare the request array
+
+ngOnInit() {
+  // when the component loads, I am initializing the orderRequest with fixed values.
+  this.orderRequest.push({
+    InventoryItemId: 1,
+    Quantity: 3
+  }, {
+    InventoryItemId: 2,
+    Quantity: 1
+  }, {
+    InventoryItemId: 3,
+    Quantity: 2
+  });
+}
+
+submit() {
+  // using the fixed values above, we will pass that array to the service.
+  // with .subscribe, we are using the session id provided by the api to redirect to the appropriate session within Stripe.
+  this.service.paymentRequest(this.orderRequest)
+    .subscribe(resp => this.redirect(resp.id));
+}
+
+// below taken directly from Stripe Documentation (except the window.alert)
+redirect(id: string) {
+    stripe.redirectToCheckout({
+      // Make the id field from the Checkout Session creation API response
+      // available to this file, so you can provide it as parameter here
+      // instead of the {{CHECKOUT_SESSION_ID}} placeholder.
+      sessionId: id
+    }).then(function (result: any) {
+      // If `redirectToCheckout` fails due to a browser or network
+      // error, display the localized error message to your customer
+      // using `result.error.message`.
+      window.alert(result.error.message);
+    });
+  }
+```
+
+#### Checkout Service
+
+##### checkout.service.ts
+```typescript
+paymentRequest(request: OrderRequest[]) {
+  return this.http.post<any>(`${this.api}/purchaseorder/payment`, request);
+}
+```

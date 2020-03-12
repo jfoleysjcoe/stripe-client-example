@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  stripeKey: 'pk_test_od...', // go to link below this code block to find your Publishable key
+  api: 'http://localhost:5000' // your api's base url
 };
 
 /*
