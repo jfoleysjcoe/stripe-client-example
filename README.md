@@ -40,6 +40,9 @@ constructor() {
   stripe = Stripe(environment.stripeKey);
 }
 ```
+---
+## Init Stripe Session with Redirect
+
 ### Models and Services
 
 Once the Stripe object is set up. You can create your Client model. In this project, the client will provide hard values to the API. Normally, you would want to create the objects from the selection the user has made.
@@ -98,11 +101,42 @@ redirect(id: string) {
   }
 ```
 
-#### Checkout Service
+#### App Service
 
-##### checkout.service.ts
+##### app/app.service.ts
 ```typescript
 paymentRequest(request: OrderRequest[]) {
-  return this.http.post<any>(`${this.api}/purchaseorder/payment`, request);
+  return this.http.post<any>(`${this.api}/purchaseorder/newSession`, request);
 }
 ```
+---
+## After Redirect
+
+### Handle the {session_id}
+
+The redirect we expect from the server is `/result?session_id={CHECKOUT_SESSION_ID}`. Currently this is set in the API, but it might be wise to move the url to a paramter in the initSession api call.
+
+Our result component will handle the response by fetching the session_id and passing it to the api to get the purchase order object.
+
+##### app/result/result.component.ts
+```typescript
+purchaseOrderResponse = {};
+constructor(_service: ApiService, activatedRoute: ActivatedRoute) {
+  const s = activatedRoute.snapshot.queryParams['session_id'];
+  _service.getPaymentResult(s).subscribe(resp => {
+    this.purchaseOrderResponse = resp;
+  });
+}
+```
+##### app/app.service.ts
+```typescript
+getPaymentResult(sessionId: string) {
+  return this.http.get<any>(`${this.api}/purchaseorder/bySession/${sessionId}`);
+}
+```
+---
+## OnCancel
+
+The cancel url is also set in the api for this project. It currently navigates back to checkout with the `poId` as a query param. I would suggest passing this down to the client because if the user decides to cancel the order, it would aid in cleaning up the data in the tables.
+
+---
